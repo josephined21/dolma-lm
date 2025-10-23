@@ -1,5 +1,5 @@
-transformers
 accelerate
-torch
+datasets
+transformers
 triton==3.4
 kernels
