@@ -42,3 +42,67 @@ Overall Accuracy: 10.03% on 588 items
 | Health | 5.71 |
 | Other | 8.70 |
 | Chemistry | 8.93 |
+
+### Arabic
+Overall Accuracy: 10.71% on 588 items
+
+#### Top 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| Engineering | 20.83 |
+| Chemistry | 16.07 |
+| Biology | 13.89 |
+| Business | 12.50 |
+| Law | 12.50 |
+
+#### Bottom 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| Health | 2.86 |
+| Computer Science | 5.00 |
+| Physics | 6.15 |
+| Economics | 7.14 |
+| Math | 7.35 |
+
+
+### French
+Overall Accuracy: 8.33% on 588 items
+
+#### Top 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| Philosophy | 16.00 |
+| Chemistry | 14.29 |
+| Engineering | 12.50 |
+| Biology | 11.11 |
+| Other | 10.87 |
+
+#### Bottom 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| History | 0.00 |
+| Health | 0.00 |
+| Business | 2.50 |
+| Physics | 4.62 |
+| Economics | 7.14 |
+
+### Chinese
+Overall Accuracy: 11.39% on 588 items
+
+#### Top 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| Business | 25.00 |
+| Economics | 21.43 |
+| Engineering | 16.67 |
+| Psychology | 15.00 |
+| Law | 14.58 |
+
+#### Bottom 5 Subjects
+| Subject | Accuracy (%) |
+|----------|---------------|
+| Computer Science | 0.00 |
+| Biology | 2.78 |
+| Other | 4.35 |
+| Physics | 6.15 |
+| Health | 8.57 |
