@@ -35,6 +35,10 @@ conda activate gpt_oss
 python scripts/benchmark_<LANGUAGE>.py
 ```
 
+### Fine-Tuning
+1. Download and prepare the dataset with the Dolma toolkit. After processing, copy the entire `wikipedia/` folder (including `v0/documents/*.gz`) into this repository on your local machine.
+2. Run `split_wiki.py` to create train/validation splits.
+
 ### References
 - https://huggingface.co/openai/gpt-oss-20b
 - https://cookbook.openai.com/articles/gpt-oss/run-transformers
