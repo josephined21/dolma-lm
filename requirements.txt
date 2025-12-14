@@ -1,5 +1,8 @@
+kernels
 accelerate
 datasets
 transformers
+trl
+peft
+bitsandbytes
 triton==3.4
-kernels

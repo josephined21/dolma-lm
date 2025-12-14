@@ -37,7 +37,42 @@ python scripts/benchmark_<LANGUAGE>.py
 
 ### Fine-Tuning
 1. Download and prepare the dataset with the Dolma toolkit. After processing, copy the entire `wikipedia/` folder (including `v0/documents/*.gz`) into this repository on your local machine.
-2. Run `split_wiki.py` to create train/validation splits.
+2. Run `split_wiki.py` to create train/validation splits. This script loads `wikipedia/v0/documents/*.gz`, keeps only the text field, creates a 98% / 2% split, and writes:
+```
+data/wikipedia_<DATE>_<LANG>/
+    ├── train.jsonl
+    └── val.jsonl
+```
+You can edit the following defaults in `split_wiki.py`:
+* DATE and LANG
+* data_path (path to the shards)
+* train/val ratio (train/val ratio, defaults to 0.02)
+3. Create a DeepSpeed configuration file. This repository expects a DeepSpeed ZeRO-3 config file named `ds_zero3.json` in the directory where training is launched. This file controls how model parameters, gradients, and optimizer states are sharded across GPUs during training.
+4. Run LoRA supervised fine-tuning with Slurm and DeepSpeed. Submit the provided Slurm job script to launch training:
+```
+sbatch run_lora_sft_ds.slurm
+```
+The Slurm script runs `lora_sft_deepspeed.py` with DeepSpeed enabled and passes the path to `ds_zero3.json` via `--deepspeed_config`. To customize a run (e.g., change the adapter name, sequence length, batch size, or number of GPUs), edit the Slurm script before submission. Training logs are written to:
+```
+lora_sft_ds.<JOBID>.out
+lora_sft_ds.<JOBID>.err
+```
+Monitor job status and logs with:
+```
+squeue -u $USER
+tail -f lora_sft_ds.<JOBID>.out
+tail -f lora_sft_ds.<JOBID>.err
+```
+5. LoRA adapters are saved under:
+```
+outputs/adapter-<adapter_name>/adapters/
+```
+You can reuse the same base model and train multiple adapters (e.g. `en-simple`, `en-es`, `multilingual`) by changing `--adapter_name`.
+
+**Notes**
+- `gpt-oss-20b` is distributed with MXFP4 quantization and is dequantized to bf16 for training in `lora_sft_deepspeed.py`.
+- DeepSpeed ZeRO-3 is used to shard model parameters, gradients, and optimizer states across GPUs.
+- Single-GPU jobs are intended for debugging DeepSpeed initialization; full training requires multiple GPUs due to bf16 memory requirements.
 
 ### References
 - https://huggingface.co/openai/gpt-oss-20b
