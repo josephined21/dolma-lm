@@ -5,4 +5,5 @@ transformers
 trl
 peft
 bitsandbytes
+deepspeed
 triton==3.4

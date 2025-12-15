@@ -4,6 +4,7 @@
 # - this is meant to validate deepspeed wiring; oom on small setups is expected
 
 import argparse
+import inspect
 import os
 from pathlib import Path
 
@@ -49,6 +50,9 @@ def parse_args():
 
     # deepspeed
     p.add_argument("--deepspeed_config", default=None)
+
+    # required for deepspeed launcher
+    p.add_argument("--local_rank", type=int, default=-1)
 
     return p.parse_args()
 
@@ -144,10 +148,12 @@ def main():
     torch.backends.cuda.matmul.allow_tf32 = True
 
     tok = AutoTokenizer.from_pretrained(args.model_name, use_fast=True)
+    tok.model_max_length = args.max_seq_len
     if tok.pad_token_id is None:
         tok.pad_token_id = tok.eos_token_id
 
     model = load_model(args.model_name, use_deepspeed)
+    model.config.use_cache = False  # extra safety with grad checkpointing
 
     targets = detect_lora_targets(model)
     lora_cfg = LoraConfig(
@@ -167,7 +173,8 @@ def main():
     run_dir = os.path.join(args.output_dir, f"adapter-{args.adapter_name}")
     os.makedirs(run_dir, exist_ok=True)
 
-    train_args = TrainingArguments(
+    # training args (compatible across transformers versions)
+    train_args_kwargs = dict(
         output_dir=run_dir,
         per_device_train_batch_size=args.per_device_train_batch_size,
         per_device_eval_batch_size=args.per_device_eval_batch_size,
@@ -177,7 +184,6 @@ def main():
         lr_scheduler_type="cosine",
         warmup_ratio=args.warmup_ratio,
         logging_steps=args.logging_steps,
-        evaluation_strategy="steps",
         eval_steps=args.eval_steps,
         save_steps=args.save_steps,
         save_total_limit=2,
@@ -188,16 +194,35 @@ def main():
         report_to="none",
         deepspeed=args.deepspeed_config,
         remove_unused_columns=False,
+        seed=args.seed,
+        data_seed=args.seed,
     )
 
-    trainer = SFTTrainer(
+    # transformers renamed this argument in some versions
+    try:
+        train_args = TrainingArguments(**train_args_kwargs, evaluation_strategy="steps")
+    except TypeError:
+        train_args = TrainingArguments(**train_args_kwargs, eval_strategy="steps")
+
+    # trainer (compatible across trl versions)
+    trainer_kwargs = dict(
         model=model,
         args=train_args,
         train_dataset=ds["train"],
         eval_dataset=ds["val"],
-        max_seq_length=args.max_seq_len,
-        tokenizer=tok,
     )
+
+    sig = inspect.signature(SFTTrainer.__init__)
+    if "processing_class" in sig.parameters:
+        trainer_kwargs["processing_class"] = tok
+    elif "tokenizer" in sig.parameters:
+        trainer_kwargs["tokenizer"] = tok
+
+    # if your jsonl uses {"text": "..."} (recommended), wire it when supported
+    if "dataset_text_field" in sig.parameters:
+        trainer_kwargs["dataset_text_field"] = "text"
+
+    trainer = SFTTrainer(**trainer_kwargs)
 
     trainer.train()
 
